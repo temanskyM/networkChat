@@ -21,7 +21,7 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
 
     @Override
     public void run() {
-        System.out.println("ru.netology.chat.Server starts.");
+        System.out.println("ru.netology.chat.chat.Server starts.");
         try {
             ServerSocket ss = new ServerSocket(PORT);
             Socket s;
@@ -35,9 +35,9 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
                 DataInputStream dis = new DataInputStream(s.getInputStream());
                 DataOutputStream dos = new DataOutputStream(s.getOutputStream());
 
-                System.out.println("Creating a new ru.netology.chat.handler for this client...");
+                System.out.println("Creating a new ru.netology.chat.chat.handler for this client...");
 
-                // Create a new ru.netology.chat.handler object for handling this request.
+                // Create a new ru.netology.chat.chat.handler object for handling this request.
                 ClientHandler clientHandler = new ClientHandler(this, s, dis, dos);
 
                 // Create a new Thread with this object.
@@ -63,8 +63,8 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
             if (clients == null) {
                 clients = new HashSet<>(1);
             }
-//            if (clientHandlerList.add(ru.netology.chat.observer) && clientHandlerList.size() == 1) {
-//                performInit(); // some initialization when first ru.netology.chat.observer added
+//            if (clientHandlerList.add(ru.netology.chat.chat.observer) && clientHandlerList.size() == 1) {
+//                performInit(); // some initialization when first ru.netology.chat.chat.observer added
 //            }
         }
         clients.add(obs);

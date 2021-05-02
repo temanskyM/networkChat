@@ -10,7 +10,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ClientHandler implements Runnable, Observer<Message> {
