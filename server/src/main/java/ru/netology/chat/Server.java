@@ -10,6 +10,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,7 +53,8 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
                 // start the thread.
                 t.start();
             }
-        } catch (IOException exception) {
+        }
+        catch (IOException exception) {
             exception.printStackTrace();
         }
     }

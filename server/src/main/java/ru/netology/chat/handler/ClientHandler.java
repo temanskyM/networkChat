@@ -1,6 +1,7 @@
 package ru.netology.chat.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import ru.netology.chat.Server;
 import ru.netology.chat.model.Message;
 import ru.netology.chat.observer.Observer;
@@ -10,6 +11,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Date;
 
 public class ClientHandler implements Runnable, Observer<Message> {
@@ -55,8 +57,21 @@ public class ClientHandler implements Runnable, Observer<Message> {
             this.dis.close();
             this.dos.close();
 
-        } catch (IOException e) {
+        }
+        catch (SocketException socketException){
+            server.unregisterObserver(this);
+            exitAnnounce();
+        }
+        catch (IOException e) {
             e.printStackTrace();
+        }
+        finally {
+            try {
+                s.close();
+                dis.close();
+                dos.close();
+            } catch (IOException ignored) {
+            }
         }
     }
 
@@ -77,6 +92,17 @@ public class ClientHandler implements Runnable, Observer<Message> {
                 .from("Server")
                 .time(new Date())
                 .text("Пользователь " + this.name + " вошел в чат.")
+                .build();
+
+        //Рассылаем всем
+        this.server.notifyObserver(announce);
+    }
+
+    private void exitAnnounce() {
+        Message announce = Message.builder()
+                .from("Server")
+                .time(new Date())
+                .text("Пользователь " + this.name + " вышел из чата.")
                 .build();
 
         //Рассылаем всем

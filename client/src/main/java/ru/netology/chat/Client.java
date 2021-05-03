@@ -15,6 +15,8 @@ public class Client implements Runnable {
     private final int ServerPort = 8000;
     private final Scanner scn = new Scanner(System.in);
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private DataInputStream dis;
+    private DataOutputStream dos;
     private String name;
 
     @Override
@@ -27,24 +29,20 @@ public class Client implements Runnable {
             Socket s = new Socket(ip, ServerPort);
 
             // obtaining input and out streams
-            DataInputStream dis = new DataInputStream(s.getInputStream());
-            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+            dis = new DataInputStream(s.getInputStream());
+            dos = new DataOutputStream(s.getOutputStream());
 
-            registration(dos);
+            registration();
 
             // sendMessage thread
-            Thread sendMessage = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
+            Thread sendMessage = new Thread(() -> {
+                while (true) {
+                    try {
                         // read the message to deliver.
                         String msg = scn.nextLine();
-
-                        try {
-                            sendMessage(dos, msg);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        sendMessage(msg);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             });
@@ -56,8 +54,7 @@ public class Client implements Runnable {
                         // read the message sent to this client
                         String received = dis.readUTF();
                         Message message = objectMapper.readValue(received, Message.class);
-
-                        System.out.println(message.toString());
+                        printMessage(message);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -72,7 +69,7 @@ public class Client implements Runnable {
 
     }
 
-    private void registration(DataOutputStream dos) throws IOException {
+    private void registration() throws IOException {
         System.out.println("Введите имя: ");
         String name = scn.nextLine();
         this.name = name;
@@ -85,12 +82,16 @@ public class Client implements Runnable {
         System.out.println("Успешная регистрация.");
     }
 
-    private void sendMessage(DataOutputStream dos, String text) throws IOException {
+    private void sendMessage(String text) throws IOException {
         Message message = Message.builder()
                 .from(name)
                 .text(text)
                 .build();
 
         dos.writeUTF(objectMapper.writeValueAsString(message));
+    }
+
+    private void printMessage(Message message) {
+        System.out.printf("[%tT] %s: %s\n", message.getTime(), message.getFrom(), message.getText());
     }
 }
