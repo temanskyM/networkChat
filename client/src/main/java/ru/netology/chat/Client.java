@@ -12,15 +12,15 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Client implements Runnable {
-    private final int ServerPort;
+    private final int PORT;
     private final Scanner scn = new Scanner(System.in);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private DataInputStream dis;
     private DataOutputStream dos;
     private String name;
 
-    public Client(int serverPort) {
-        ServerPort = serverPort;
+    public Client(int port) {
+        this.PORT = port;
     }
 
     @Override
@@ -30,7 +30,7 @@ public class Client implements Runnable {
             InetAddress ip = InetAddress.getByName("localhost");
 
             // establish the connection
-            Socket s = new Socket(ip, ServerPort);
+            Socket s = new Socket(ip, PORT);
 
             // obtaining input and out streams
             dis = new DataInputStream(s.getInputStream());
