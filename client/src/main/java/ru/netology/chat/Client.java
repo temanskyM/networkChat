@@ -12,12 +12,16 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Client implements Runnable {
-    private final int ServerPort = 8000;
+    private final int ServerPort;
     private final Scanner scn = new Scanner(System.in);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private DataInputStream dis;
     private DataOutputStream dos;
     private String name;
+
+    public Client(int serverPort) {
+        ServerPort = serverPort;
+    }
 
     @Override
     public void run() {
