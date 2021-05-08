@@ -22,7 +22,7 @@ public class ClientHandler implements Runnable, Observer<Message> {
     private final DataOutputStream dos;
     private final Socket s;
     private final Server server;
-
+    private boolean start;
     private String name;
 
     // constructor
@@ -37,26 +37,23 @@ public class ClientHandler implements Runnable, Observer<Message> {
     @Override
     public void run() {
         try {
+            start = true;
             registration();
-            String received;
-            while (true) {
-                // receive the string
-                received = dis.readUTF();
+            while (start) {
+                String received = dis.readUTF();
 
                 Message recvMessage = objectMapper.readValue(received, Message.class);
                 recvMessage.setTime(new Date());
                 log.info("Received from user \"" + this.name + "\" message \"" + recvMessage.getText() + "\" at " + recvMessage.getTime());
 
-                //Рассылаем всем
                 server.notifyObserver(recvMessage);
 
                 if (recvMessage.getText().equals("/exit")) {
                     this.s.close();
                     exitProcess();
-                    break;
+                    start = false;
                 }
             }
-
         } catch (SocketException socketException) {
             exitProcess();
         } catch (IOException e) {

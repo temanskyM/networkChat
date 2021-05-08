@@ -20,7 +20,6 @@ import java.util.Set;
 @Slf4j
 public class Server implements Runnable, Observable<Message, ClientHandler> {
     private final int PORT;
-    // this is the object we will be synchronizing on ("the monitor")
     private final Object MONITOR = new Object();
     private Set<ClientHandler> clients;
 
