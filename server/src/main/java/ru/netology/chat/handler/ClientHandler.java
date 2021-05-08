@@ -1,7 +1,7 @@
 package ru.netology.chat.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import ru.netology.chat.Server;
 import ru.netology.chat.model.Message;
 import ru.netology.chat.observer.Observer;
@@ -12,16 +12,18 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.Date;
 
+@Slf4j
 public class ClientHandler implements Runnable, Observer<Message> {
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private String name;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final DataInputStream dis;
     private final DataOutputStream dos;
-    private Socket s;
+    private final Socket s;
+    private final Server server;
 
-    private Server server;
+    private String name;
 
     // constructor
     public ClientHandler(Server server, Socket s,
@@ -43,31 +45,24 @@ public class ClientHandler implements Runnable, Observer<Message> {
 
                 Message recvMessage = objectMapper.readValue(received, Message.class);
                 recvMessage.setTime(new Date());
-                System.out.println("Received from " + this.name + ":" + recvMessage.getText());
+                log.info("Received from user \"" + this.name + "\" message \"" + recvMessage.getText() + "\" at " + recvMessage.getTime());
 
                 //Рассылаем всем
                 server.notifyObserver(recvMessage);
 
-                if (recvMessage.getText().equals("logout")) {
+                if (recvMessage.getText().equals("/exit")) {
                     this.s.close();
+                    exitProcess();
                     break;
                 }
             }
 
-            this.dis.close();
-            this.dos.close();
-
-        }
-        catch (SocketException socketException){
-            server.unregisterObserver(this);
-            exitAnnounce();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        finally {
+        } catch (SocketException socketException) {
+            exitProcess();
+        } catch (IOException e) {
+            log.error(Arrays.toString(e.getStackTrace()));
+        } finally {
             try {
-                s.close();
                 dis.close();
                 dos.close();
             } catch (IOException ignored) {
@@ -91,30 +86,35 @@ public class ClientHandler implements Runnable, Observer<Message> {
         Message announce = Message.builder()
                 .from("Server")
                 .time(new Date())
-                .text("Пользователь " + this.name + " вошел в чат.")
+                .text("User " + this.name + " join to chat.")
                 .build();
 
         //Рассылаем всем
         this.server.notifyObserver(announce);
+
+        log.info("User " + this.name + " join to chat.");
     }
 
-    private void exitAnnounce() {
+    private void exitProcess() {
+        server.unregisterObserver(this);
         Message announce = Message.builder()
                 .from("Server")
                 .time(new Date())
-                .text("Пользователь " + this.name + " вышел из чата.")
+                .text("User " + this.name + " leave from chat.")
                 .build();
 
         //Рассылаем всем
         this.server.notifyObserver(announce);
+
+        log.info("User " + this.name + " leave from chat.");
     }
 
     @Override
     public void update(Message message) {
         try {
             dos.writeUTF(objectMapper.writeValueAsString(message));
-        } catch (IOException exception) {
-            exception.printStackTrace();
+        } catch (IOException e) {
+            log.error(Arrays.toString(e.getStackTrace()));
         }
     }
 }

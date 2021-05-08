@@ -1,5 +1,6 @@
 package ru.netology.chat;
 
+import lombok.extern.slf4j.Slf4j;
 import ru.netology.chat.handler.ClientHandler;
 import ru.netology.chat.model.Message;
 import ru.netology.chat.observer.Observable;
@@ -11,10 +12,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+@Slf4j
 public class Server implements Runnable, Observable<Message, ClientHandler> {
     private final int PORT;
     // this is the object we will be synchronizing on ("the monitor")
@@ -27,7 +30,7 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
 
     @Override
     public void run() {
-        System.out.println("ru.netology.chat.chat.Server starts.");
+        log.info("Server starts");
         try {
             ServerSocket ss = new ServerSocket(PORT);
             Socket s;
@@ -35,21 +38,21 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
                 // Accept the incoming request
                 s = ss.accept();
 
-                System.out.println("New client request received : " + s);
+                log.info("New client request received : " + s);
 
                 // obtain input and output streams
                 DataInputStream dis = new DataInputStream(s.getInputStream());
                 DataOutputStream dos = new DataOutputStream(s.getOutputStream());
 
-                System.out.println("Creating a new ru.netology.chat.chat.handler for this client...");
+                log.debug("Creating a new handler for this client...");
 
-                // Create a new ru.netology.chat.chat.handler object for handling this request.
+                // Create a new handler object for handling this request.
                 ClientHandler clientHandler = new ClientHandler(this, s, dis, dos);
 
                 // Create a new Thread with this object.
                 Thread t = new Thread(clientHandler);
 
-                System.out.println("Adding this client to active client list");
+                log.debug("Adding this client to active client list");
 
                 // add this client to active clients list
                 registerObserver(clientHandler);
@@ -58,8 +61,8 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
                 t.start();
             }
         }
-        catch (IOException exception) {
-            exception.printStackTrace();
+        catch (IOException e) {
+            log.error(Arrays.toString(e.getStackTrace()));
         }
     }
 
@@ -70,9 +73,6 @@ public class Server implements Runnable, Observable<Message, ClientHandler> {
             if (clients == null) {
                 clients = new HashSet<>(1);
             }
-//            if (clientHandlerList.add(ru.netology.chat.chat.observer) && clientHandlerList.size() == 1) {
-//                performInit(); // some initialization when first ru.netology.chat.chat.observer added
-//            }
         }
         clients.add(obs);
     }

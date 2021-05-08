@@ -1,6 +1,7 @@
 package ru.netology.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import ru.netology.chat.model.Message;
 import ru.netology.chat.model.Registration;
 
@@ -9,8 +10,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Scanner;
 
+@Slf4j
 public class Client implements Runnable {
     private final int PORT;
     private final Scanner scn = new Scanner(System.in);
@@ -45,8 +48,11 @@ public class Client implements Runnable {
                         // read the message to deliver.
                         String msg = scn.nextLine();
                         sendMessage(msg);
+
+                        if(msg.equals("/exit"))
+                            return;
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error(Arrays.toString(e.getStackTrace()));
                     }
                 }
             });
@@ -56,25 +62,33 @@ public class Client implements Runnable {
                 while (true) {
                     try {
                         // read the message sent to this client
+                        if(Thread.currentThread().isInterrupted())
+                            return;
                         String received = dis.readUTF();
                         Message message = objectMapper.readValue(received, Message.class);
                         printMessage(message);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error(Arrays.toString(e.getStackTrace()));
                     }
                 }
             });
 
             sendMessage.start();
             readMessage.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            sendMessage.join();
+
+            readMessage.interrupt();
+            s.close();
+            log.info("Close client");
+        } catch (IOException | InterruptedException e) {
+            log.error(Arrays.toString(e.getStackTrace()));
         }
 
     }
 
     private void registration() throws IOException {
-        System.out.println("Введите имя: ");
+        System.out.println("Input name: ");
         String name = scn.nextLine();
         this.name = name;
 
@@ -83,7 +97,7 @@ public class Client implements Runnable {
 
         String msg = objectMapper.writeValueAsString(registration);
         dos.writeUTF(msg);
-        System.out.println("Успешная регистрация.");
+        log.info("Success registration");
     }
 
     private void sendMessage(String text) throws IOException {
@@ -97,5 +111,7 @@ public class Client implements Runnable {
 
     private void printMessage(Message message) {
         System.out.printf("[%tT] %s: %s\n", message.getTime(), message.getFrom(), message.getText());
+
+        log.info("Received from \""+ message.getFrom() + "\" message \"" +message.getText() +"\"");
     }
 }
